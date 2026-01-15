@@ -76,9 +76,19 @@ public class BallController : MonoBehaviour
             }
             rb.linearVelocity = vel.normalized * currentSpeed;
             
+            // WYMUSZENIE Z=0 - piłka MUSI być w płaszczyźnie gry!
+            Vector3 pos = transform.position;
+            if (Mathf.Abs(pos.z) > 0.01f)
+            {
+                pos.z = 0f;
+                transform.position = pos;
+                Debug.LogWarning($"Ball Z corrected: was {transform.position.z}, now 0");
+            }
+            
             // Rotacja piłki (animacja proceduralna)
             transform.Rotate(Vector3.forward, rb.linearVelocity.magnitude * 2f);
-                        // Sprawdź czy piłka nie spadła za nisko (failsafe)
+            
+            // Sprawdź czy piłka nie spadła za nisko (failsafe)
             if (transform.position.y < -7f)
             {
                 Debug.Log("Ball fell too low - Auto Reset!");
@@ -86,8 +96,9 @@ public class BallController : MonoBehaviour
                 Invoke(nameof(LaunchBall), 1f);
                 return;
             }
-                        // Zapobieganie wyjściu poza planszę
-            Vector3 pos = transform.position;
+            
+            // Zapobieganie wyjściu poza planszę (użyj istniejącej zmiennej pos)
+            pos = transform.position;
             if (pos.x < -9f || pos.x > 9f || pos.y > 11f)
             {
                 // Odbicie od granicy

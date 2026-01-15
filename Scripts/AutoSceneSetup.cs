@@ -26,7 +26,7 @@ public class AutoSceneSetup : MonoBehaviour
 
     private void StartGame()
     {
-        BallController ball = FindObjectOfType<BallController>();
+        BallController ball = FindFirstObjectByType<BallController>();
         if (ball != null)
         {
             ball.LaunchBall();
@@ -57,11 +57,11 @@ public class AutoSceneSetup : MonoBehaviour
         // 7. Create Bricks
         CreateBricks();
         
-        // 8. Create GameManager
-        CreateGameManager();
+        // 8. Create UI FIRST (before GameManager)
+        UIManager createdUIManager = CreateUI();
         
-        // 9. Create UI
-        CreateUI();
+        // 9. Create GameManager and assign UI
+        CreateGameManager(createdUIManager);
     }
 
     private void SetupCamera()
@@ -74,9 +74,9 @@ public class AutoSceneSetup : MonoBehaviour
             camObj.tag = "MainCamera";
         }
 
-        mainCamera.transform.position = new Vector3(0, 0, -10);
+        mainCamera.transform.position = new Vector3(0, -3f, -10); // Jeszcze niżej - skupienie na grze
         mainCamera.orthographic = true;
-        mainCamera.orthographicSize = 10f;
+        mainCamera.orthographicSize = 5f; // Balans między przybliżeniem a widokiem całej planszy
         
         if (mainCamera.GetComponent<CameraController>() == null)
         {
@@ -88,7 +88,7 @@ public class AutoSceneSetup : MonoBehaviour
 
     private void SetupLighting()
     {
-        Light dirLight = FindObjectOfType<Light>();
+        Light dirLight = FindFirstObjectByType<Light>();
         if (dirLight == null)
         {
             GameObject lightObj = new GameObject("Directional Light");
@@ -123,7 +123,7 @@ public class AutoSceneSetup : MonoBehaviour
         
         // BoxCollider - ZNACZNIE większy na szerokość i wysokość dla lepszych kolizji na krawędziach
         BoxCollider paddleCollider = paddle.GetComponent<BoxCollider>();
-        paddleCollider.size = new Vector3(1.15f, 1.8f, 1.1f); // Większy collider - eliminuje "dziury"
+        paddleCollider.size = new Vector3(1.3f, 2.0f, 1.2f); // Jeszcze większy collider - pełne pokrycie krawędzi
         
         // Physics Material - zapobiega przechodzeniu przez krawędzie
         PhysicsMaterial paddlePhysicsMat = new PhysicsMaterial("PaddlePhysics");
@@ -197,34 +197,34 @@ public class AutoSceneSetup : MonoBehaviour
 
     private void CreateWalls()
     {
-        // Left Wall
+        // Left Wall - BARDZO WYSOKA i GRUBA
         GameObject leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         leftWall.name = "LeftWall";
         leftWall.tag = "Wall";
-        leftWall.transform.position = new Vector3(-9, 0, 0);
-        leftWall.transform.localScale = new Vector3(0.5f, 20, 1);
+        leftWall.transform.position = new Vector3(-9.5f, 0, 0); // Dalej od gry
+        leftWall.transform.localScale = new Vector3(1f, 30, 3); // Wysokość 30, grubość 3
         leftWall.AddComponent<WallController>();
         SetWallMaterial(leftWall);
 
-        // Right Wall
+        // Right Wall - BARDZO WYSOKA i GRUBA
         GameObject rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         rightWall.name = "RightWall";
         rightWall.tag = "Wall";
-        rightWall.transform.position = new Vector3(9, 0, 0);
-        rightWall.transform.localScale = new Vector3(0.5f, 20, 1);
+        rightWall.transform.position = new Vector3(9.5f, 0, 0); // Dalej od gry
+        rightWall.transform.localScale = new Vector3(1f, 30, 3); // Wysokość 30, grubość 3
         rightWall.AddComponent<WallController>();
         SetWallMaterial(rightWall);
 
-        // Top Wall
+        // Top Wall - SZEROKA i GRUBA
         GameObject topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         topWall.name = "TopWall";
         topWall.tag = "Wall";
-        topWall.transform.position = new Vector3(0, 10, 0);
-        topWall.transform.localScale = new Vector3(20, 0.5f, 1);
+        topWall.transform.position = new Vector3(0, 7.2f, 0); // Wyżej żeby nie było pustej przestrzeni
+        topWall.transform.localScale = new Vector3(22, 1f, 3); // Szersza i grubsza
         topWall.AddComponent<WallController>();
         SetWallMaterial(topWall);
 
-        Debug.Log("✓ Walls created");
+        Debug.Log("✓ Walls created (30 high, 3 thick)");
     }
 
     private void SetWallMaterial(GameObject wall)
@@ -259,10 +259,58 @@ public class AutoSceneSetup : MonoBehaviour
     {
         GameObject bricksContainer = new GameObject("BricksContainer");
 
+        // Wczytaj konfigurację poziomu z LevelSelector
+        var levelConfig = LevelSelector.GetCurrentConfig();
         int rows = 5;
         int columns = 10;
-        float spacing = 1.1f;
         Vector3 startPos = new Vector3(-5f, 5f, 0f);
+        
+        if (levelConfig != null)
+        {
+            Debug.Log($"CreateBricks using level: {levelConfig.levelName}");
+            
+            // Użyj konfiguracji specjalnych dla każdego poziomu
+            switch (levelConfig.levelName)
+            {
+                case "Easy":
+                    rows = 1;
+                    columns = 1;
+                    startPos = new Vector3(0f, 4f, 0f);
+                    Debug.Log("Easy Mode: Creating 1 brick");
+                    break;
+                    
+                case "Normal":
+                    rows = 3;
+                    columns = 5;
+                    startPos = new Vector3(-2.5f, 4f, 0f);
+                    Debug.Log($"Normal Mode: Creating {rows}x{columns} bricks");
+                    break;
+                    
+                case "Hard":
+                    rows = 5;
+                    columns = 8;
+                    startPos = new Vector3(-4f, 5f, 0f);
+                    Debug.Log($"Hard Mode: Creating {rows}x{columns} bricks");
+                    break;
+                    
+                case "Expert":
+                    rows = 6;
+                    columns = 10;
+                    startPos = new Vector3(-5f, 5.5f, 0f);
+                    Debug.Log($"Expert Mode: Creating {rows}x{columns} bricks");
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"Unknown level '{levelConfig.levelName}' - using default 5x10");
+                    break;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No level config found - using default 5x10");
+        }
+        
+        float spacing = 1.1f;
 
         Color[] colors = {
             Color.red,
@@ -300,17 +348,28 @@ public class AutoSceneSetup : MonoBehaviour
         Debug.Log($"✓ Created {rows * columns} bricks");
     }
 
-    private void CreateGameManager()
+    private void CreateGameManager(UIManager uiManager)
     {
         GameObject managerObj = new GameObject("GameManager");
-        managerObj.AddComponent<GameManager>();
+        GameManager gm = managerObj.AddComponent<GameManager>();
         managerObj.AddComponent<AudioManager>();
         managerObj.AddComponent<ParticleController>();
-
-        Debug.Log("✓ GameManager created");
+        
+        // Przypisz UIManager przez pole publiczne
+        var gmType = typeof(GameManager);
+        var uiManagerField = gmType.GetField("uiManager", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (uiManagerField != null)
+        {
+            uiManagerField.SetValue(gm, uiManager);
+            Debug.Log("✓ GameManager created with UIManager reference");
+        }
+        else
+        {
+            Debug.LogWarning("✗ Could not assign UIManager to GameManager");
+        }
     }
 
-    private void CreateUI()
+    private UIManager CreateUI()
     {
         // Check if TextMeshPro is available
         bool hasTMP = System.Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro") != null;
@@ -325,7 +384,7 @@ public class AutoSceneSetup : MonoBehaviour
         canvasObj.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
         // Create Event System if not exists
-        if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
         {
             GameObject eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -348,7 +407,13 @@ public class AutoSceneSetup : MonoBehaviour
         UIManager uiManager = canvasObj.AddComponent<UIManager>();
         AssignUIReferences(uiManager, hudPanel, pausePanel, gameOverPanel, victoryPanel, hasTMP);
 
+        // Add FixUIReferences component to auto-repair any missing references
+        canvasObj.AddComponent<FixUIReferences>();
+
         Debug.Log("✓ Complete UI created with HUD, Pause, GameOver, and Victory screens");
+        Debug.Log("✓ FixUIReferences added - will auto-repair UI connections");
+        
+        return uiManager; // Return UIManager so it can be assigned to GameManager
     }
 
     private GameObject CreateHUDPanel(GameObject canvas, bool hasTMP)
@@ -364,12 +429,12 @@ public class AutoSceneSetup : MonoBehaviour
         // Score Text (top left)
         GameObject scoreObj = new GameObject("ScoreText");
         scoreObj.transform.SetParent(hud.transform, false);
-        CreateText(scoreObj, "Score: 000000", new Vector2(20, -20), new Vector2(0, 1), new Vector2(0, 1), hasTMP, 36);
+        CreateText(scoreObj, "Score: 000000", new Vector2(200, -20), new Vector2(0, 1), new Vector2(0, 1), hasTMP, 36);
         
         // Lives Text (top right)
         GameObject livesObj = new GameObject("LivesText");
         livesObj.transform.SetParent(hud.transform, false);
-        CreateText(livesObj, "Lives: 3", new Vector2(-20, -20), new Vector2(1, 1), new Vector2(1, 1), hasTMP, 36);
+        CreateText(livesObj, "Lives: 3", new Vector2(-100, -20), new Vector2(1, 1), new Vector2(1, 1), hasTMP, 36);
         
         return hud;
     }
@@ -431,11 +496,8 @@ public class AutoSceneSetup : MonoBehaviour
         score.transform.SetParent(panel.transform, false);
         CreateText(score, "Score: 000000", Vector2.zero, new Vector2(0.5f, 0.55f), new Vector2(0.5f, 0.55f), hasTMP, 36);
         
-        // Next Level Button (TODO)
-        CreateButton(panel, "NextLevel Button", new Vector2(0.5f, 0.4f), new Vector2(300, 60), "NEXT LEVEL", hasTMP, "OnRestartButton");
-        
         // Main Menu Button
-        CreateButton(panel, "MainMenu Button", new Vector2(0.5f, 0.25f), new Vector2(300, 60), "MAIN MENU", hasTMP, "OnMainMenuButton");
+        CreateButton(panel, "MainMenu Button", new Vector2(0.5f, 0.35f), new Vector2(300, 60), "MAIN MENU", hasTMP, "OnMainMenuButton");
         
         panel.SetActive(false);
         return panel;
@@ -507,7 +569,7 @@ public class AutoSceneSetup : MonoBehaviour
         
         // Add listener
         btn.onClick.AddListener(() => {
-            var uiManager = FindObjectOfType<UIManager>();
+            var uiManager = FindFirstObjectByType<UIManager>();
             if (uiManager != null)
             {
                 uiManager.SendMessage(functionName, SendMessageOptions.DontRequireReceiver);

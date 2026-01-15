@@ -18,7 +18,7 @@ public class DeadZone : MonoBehaviour
                 AudioManager.Instance.PlayLoseLife();
             }
             
-            CameraController camera = FindObjectOfType<CameraController>();
+            CameraController camera = FindFirstObjectByType<CameraController>();
             if (camera != null)
             {
                 camera.Shake(0.2f);

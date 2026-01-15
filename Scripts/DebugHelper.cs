@@ -10,14 +10,14 @@ public class DebugHelper : MonoBehaviour
         Debug.Log("=== DEBUG HELPER START ===");
         
         // Sprawdź GameManager
-        var gm = FindObjectOfType<GameManager>();
+        var gm = FindFirstObjectByType<GameManager>();
         if (gm != null)
             Debug.Log("✓ GameManager found");
         else
             Debug.LogWarning("✗ GameManager NOT found");
         
         // Sprawdź UIManager
-        var uim = FindObjectOfType<UIManager>();
+        var uim = FindFirstObjectByType<UIManager>();
         if (uim != null)
         {
             Debug.Log("✓ UIManager found");
@@ -32,14 +32,14 @@ public class DebugHelper : MonoBehaviour
             Debug.LogWarning("✗ UIManager NOT found");
         
         // Sprawdź EventSystem
-        var es = FindObjectOfType<UnityEngine.EventSystems.EventSystem>();
+        var es = FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
         if (es != null)
             Debug.Log("✓ EventSystem found");
         else
             Debug.LogWarning("✗ EventSystem NOT found");
         
         // Sprawdź Canvas
-        var canvas = FindObjectOfType<Canvas>();
+        var canvas = FindFirstObjectByType<Canvas>();
         if (canvas != null)
             Debug.Log($"✓ Canvas found - Children: {canvas.transform.childCount}");
         else

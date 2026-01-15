@@ -39,11 +39,66 @@ public class LevelGenerator : MonoBehaviour
     {
         // Wczytaj konfigurację poziomu z LevelSelector
         var levelConfig = LevelSelector.GetCurrentConfig();
+        
+        Debug.Log("=== LEVEL GENERATOR START ===");
+        Debug.Log($"PlayerPrefs LevelName: {PlayerPrefs.GetString("LevelName", "NOT SET")}");
+        Debug.Log($"PlayerPrefs Rows: {PlayerPrefs.GetInt("LevelRows", -1)}");
+        Debug.Log($"PlayerPrefs Columns: {PlayerPrefs.GetInt("LevelColumns", -1)}");
+        
         if (levelConfig != null)
         {
+            Debug.Log($"LevelConfig received: {levelConfig.levelName}");
+            
             rows = levelConfig.rows;
             columns = levelConfig.columns;
-            Debug.Log($"Level Generator using: {rows}x{columns} layout");
+            
+            // SPECJALNY UKŁAD DLA KAŻDEGO POZIOMU
+            switch (levelConfig.levelName)
+            {
+                case "Easy":
+                    // Tylko 1 cegła - instant victory!
+                    rows = 1;
+                    columns = 1;
+                    startPosition = new Vector3(0f, 4f, 0f);
+                    currentPattern = LevelPattern.Standard;
+                    Debug.Log("✓ Easy Mode: 1 brick - hit it to win!");
+                    break;
+                    
+                case "Normal":
+                    // 3 rzędy x 5 kolumn - średnio łatwy
+                    rows = 3;
+                    columns = 5;
+                    startPosition = new Vector3(-2.5f, 4f, 0f);
+                    currentPattern = LevelPattern.Standard;
+                    Debug.Log($"✓ Normal Mode: {rows}x{columns} = {rows*columns} bricks");
+                    break;
+                    
+                case "Hard":
+                    // 5 rzędów x 8 kolumn - trudny
+                    rows = 5;
+                    columns = 8;
+                    startPosition = new Vector3(-4f, 5f, 0f);
+                    currentPattern = LevelPattern.Standard;
+                    Debug.Log($"✓ Hard Mode: {rows}x{columns} = {rows*columns} bricks");
+                    break;
+                    
+                case "Expert":
+                    // 6 rzędów x 10 kolumn - bardzo trudny
+                    rows = 6;
+                    columns = 10;
+                    startPosition = new Vector3(-5f, 5.5f, 0f);
+                    currentPattern = LevelPattern.Pyramid;
+                    Debug.Log($"✓ Expert Mode: {rows}x{columns} with Pyramid pattern");
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"⚠ Unknown level: '{levelConfig.levelName}' - using default {rows}x{columns}");
+                    break;
+            }
+        }
+        else
+        {
+            Debug.LogError("✗ levelConfig is NULL!");
         }
         
         GenerateLevel();
@@ -224,7 +279,7 @@ public class LevelGenerator : MonoBehaviour
         }
         else
         {
-            BrickController[] bricks = FindObjectsOfType<BrickController>();
+            BrickController[] bricks = FindObjectsByType<BrickController>(FindObjectsSortMode.None);
             foreach (var brick in bricks)
             {
                 Destroy(brick.gameObject);

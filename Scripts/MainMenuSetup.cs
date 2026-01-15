@@ -129,16 +129,16 @@ public class MainMenuSetup : MonoBehaviour
         float spacing = 0.12f;
         
         CreateLevelButton(panel, "Easy Button", new Vector2(0.5f, startY), new Vector2(400, 70), 
-            "EASY - 3 Rows | 5 Lives", hasTMP, new Color(0.2f, 0.6f, 0.2f), 0);
+            "EASY - 1 Brick | 5 Lives", hasTMP, new Color(0.2f, 0.6f, 0.2f), 0);
         
         CreateLevelButton(panel, "Normal Button", new Vector2(0.5f, startY - spacing), new Vector2(400, 70), 
-            "NORMAL - 5 Rows | 3 Lives", hasTMP, new Color(0.3f, 0.3f, 0.6f), 1);
+            "NORMAL - 15 Bricks | 3 Lives", hasTMP, new Color(0.3f, 0.3f, 0.6f), 1);
         
         CreateLevelButton(panel, "Hard Button", new Vector2(0.5f, startY - spacing * 2), new Vector2(400, 70), 
-            "HARD - 7 Rows | 2 Lives", hasTMP, new Color(0.6f, 0.4f, 0.2f), 2);
+            "HARD - 40 Bricks | 2 Lives", hasTMP, new Color(0.6f, 0.4f, 0.2f), 2);
         
         CreateLevelButton(panel, "Expert Button", new Vector2(0.5f, startY - spacing * 3), new Vector2(400, 70), 
-            "EXPERT - 8 Rows | 1 Life", hasTMP, new Color(0.7f, 0.2f, 0.2f), 3);
+            "EXPERT - 60 Bricks | 1 Life", hasTMP, new Color(0.7f, 0.2f, 0.2f), 3);
 
         // Back button
         CreateButton(panel, "Back Button", new Vector2(0.5f, 0.15f), new Vector2(250, 60), "BACK", hasTMP, () => {
@@ -254,11 +254,17 @@ public class MainMenuSetup : MonoBehaviour
         btn.colors = colors;
         
         btn.onClick.AddListener(() => {
+            Debug.Log($"🔴 BUTTON CLICKED: levelIndex={levelIndex}");
             var levelSelector = parent.GetComponent<LevelSelector>();
             if (levelSelector != null)
             {
+                Debug.Log($"🟢 LevelSelector found, calling SelectLevel({levelIndex})");
                 levelSelector.SelectLevel(levelIndex);
                 levelSelector.OnPlayButton();
+            }
+            else
+            {
+                Debug.LogError("🔴 LevelSelector NOT FOUND on parent!");
             }
         });
         

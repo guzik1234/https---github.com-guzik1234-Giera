@@ -23,6 +23,11 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("=== UIManager.Start() ===");
+        Debug.Log($"scoreText: {(scoreText != null ? "OK" : "NULL")}");
+        Debug.Log($"livesText: {(livesText != null ? "OK" : "NULL")}");
+        Debug.Log($"hudPanel: {(hudPanel != null ? "OK" : "NULL")}");
+        
         // Ukryj wszystkie panele menu na start
         if (pausePanel != null) pausePanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
@@ -45,6 +50,11 @@ public class UIManager : MonoBehaviour
         if (livesText != null)
         {
             livesText.text = $"Lives: {lives}";
+            Debug.Log($"UIManager.UpdateLives called: {lives}");
+        }
+        else
+        {
+            Debug.LogError("UIManager: livesText is NULL! Cannot update lives display.");
         }
     }
 

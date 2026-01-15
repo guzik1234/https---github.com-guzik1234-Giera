@@ -78,14 +78,38 @@ public class GameManager : MonoBehaviour
 
     private void InitializeGame()
     {
+        // Reset score na początek nowej gry
+        currentScore = 0;
+        
+        // Znajdź UIManager jeśli jeszcze nie przypisany
+        if (uiManager == null)
+        {
+            uiManager = FindFirstObjectByType<UIManager>();
+            Debug.Log($"UIManager found: {(uiManager != null ? "YES" : "NO")}");
+        }
+        
         // Znajdź wszystkie bloki w scenie
-        BrickController[] bricks = FindObjectsOfType<BrickController>();
+        BrickController[] bricks = FindObjectsByType<BrickController>(FindObjectsSortMode.None);
         activeBricks.AddRange(bricks);
         
         // Znajdź piłkę
-        currentBall = FindObjectOfType<BallController>();
+        currentBall = FindFirstObjectByType<BallController>();
         
+        // Ustaw isGameActive na true
+        isGameActive = true;
+        
+        // Aktualizuj UI wielokrotnie na początku (żeby UI zdążył się utworzyć)
         UpdateUI();
+        InvokeRepeating(nameof(UpdateUI), 0.1f, 0.1f);
+        Invoke(nameof(StopRepeatingUI), 2f);
+        
+        Debug.Log($"Game initialized: Lives={currentLives}, Bricks={activeBricks.Count}");
+    }
+    
+    private void StopRepeatingUI()
+    {
+        CancelInvoke(nameof(UpdateUI));
+        Debug.Log("UI updates stabilized");
     }
 
     public void StartGame()
@@ -116,7 +140,16 @@ public class GameManager : MonoBehaviour
 
     public void OnBallLost()
     {
+        Debug.Log($"OnBallLost called! Lives before: {currentLives}");
+        
+        // Upewnij się, że UIManager jest dostępny
+        if (uiManager == null)
+        {
+            uiManager = FindFirstObjectByType<UIManager>();
+        }
+        
         currentLives--;
+        Debug.Log($"OnBallLost - Lives after: {currentLives}");
         UpdateUI();
         
         // Odtwórz dźwięk utraty życia
@@ -180,11 +213,20 @@ public class GameManager : MonoBehaviour
     }
 
     private void UpdateUI()
-    {
-        if (uiManager != null)
+    {        // Jeśli UIManager jest null, spróbuj go znaleźć
+        if (uiManager == null)
+        {
+            uiManager = FindFirstObjectByType<UIManager>();
+        }
+                if (uiManager != null)
         {
             uiManager.UpdateScore(currentScore);
             uiManager.UpdateLives(currentLives);
+            Debug.Log($"UI Updated: Score={currentScore}, Lives={currentLives}");
+        }
+        else
+        {
+            Debug.LogWarning("UIManager is NULL - cannot update UI!");
         }
     }
 

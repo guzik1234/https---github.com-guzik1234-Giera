@@ -53,7 +53,7 @@ public class WallController : MonoBehaviour
             }
             
             // Screen shake
-            CameraController camera = FindObjectOfType<CameraController>();
+            CameraController camera = FindFirstObjectByType<CameraController>();
             if (camera != null)
             {
                 camera.Shake(0.05f);
