@@ -30,15 +30,26 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        // Singleton pattern
-        if (Instance == null)
+        // Singleton pattern - natychmiast niszcz starą instancję
+        if (Instance != null && Instance != this)
         {
-            Instance = this;
+            Debug.Log($"GameManager.Awake() - Destroying old instance: {Instance.gameObject.name}");
+            GameObject oldObject = Instance.gameObject;
+            Instance = null; // Wyczyść najpierw referencję
+            DestroyImmediate(oldObject); // Potem zniszcz obiekt
         }
-        else
+        
+        Instance = this;
+        Debug.Log($"GameManager.Awake() - New Instance set to {gameObject.name}");
+    }
+
+    void OnDestroy()
+    {
+        // Wyczyść singleton gdy obiekt jest niszczony
+        if (Instance == this)
         {
-            Destroy(gameObject);
-            return;
+            Instance = null;
+            Debug.Log("GameManager.OnDestroy() - Instance cleared");
         }
     }
 
@@ -80,6 +91,9 @@ public class GameManager : MonoBehaviour
     {
         // Reset score na początek nowej gry
         currentScore = 0;
+        
+        // WAŻNE: Wyczyść starą listę cegieł przed dodaniem nowych!
+        activeBricks.Clear();
         
         // Znajdź UIManager jeśli jeszcze nie przypisany
         if (uiManager == null)

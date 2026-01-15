@@ -2,33 +2,17 @@ using UnityEngine;
 
 /// <summary>
 /// Manager audio - zarządza dźwiękami i muzyką
+/// UWAGA: Używa proceduralnych dźwięków - nie potrzebuje plików audio!
 /// </summary>
-[RequireComponent(typeof(AudioSource))]
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
 
-    [Header("Audio Clips")]
-    [SerializeField] private AudioClip ballHitPaddleSound;
-    [SerializeField] private AudioClip ballHitBrickSound;
-    [SerializeField] private AudioClip ballHitWallSound;
-    [SerializeField] private AudioClip brickDestroySound;
-    [SerializeField] private AudioClip loseLifeSound;
-    [SerializeField] private AudioClip gameOverSound;
-    [SerializeField] private AudioClip victorySound;
-    [SerializeField] private AudioClip buttonClickSound;
-    
-    [Header("Music")]
-    [SerializeField] private AudioClip gameplayMusic;
-    [SerializeField] private AudioClip menuMusic;
-    
     [Header("Settings")]
-    [SerializeField] private float masterVolume = 1f;
-    [SerializeField] private float sfxVolume = 1f;
-    [SerializeField] private float musicVolume = 0.5f;
+    [SerializeField] private float masterVolume = 0.3f;
+    [SerializeField] private bool enableAudio = true;
     
-    private AudioSource musicSource;
-    private AudioSource sfxSource;
+    private AudioSource audioSource;
 
     void Awake()
     {
@@ -47,126 +31,142 @@ public class AudioManager : MonoBehaviour
 
     private void InitializeAudioSources()
     {
-        // Music source
-        musicSource = gameObject.AddComponent<AudioSource>();
-        musicSource.loop = true;
-        musicSource.volume = musicVolume * masterVolume;
-        musicSource.playOnAwake = false;
-        
-        // SFX source
-        sfxSource = GetComponent<AudioSource>();
-        sfxSource.loop = false;
-        sfxSource.volume = sfxVolume * masterVolume;
-        sfxSource.playOnAwake = false;
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.volume = masterVolume;
     }
 
     // Metody publiczne do odtwarzania dźwięków
     public void PlayBallHitPaddle()
     {
-        PlaySFX(ballHitPaddleSound);
+        if (!enableAudio || audioSource == null) return;
+        // Krótki, ostry dźwięk - wyższy ton
+        PlayTone(600f, 0.08f, 0.4f);
     }
 
     public void PlayBallHitBrick()
     {
-        PlaySFX(ballHitBrickSound);
+        if (!enableAudio || audioSource == null) return;
+        // Średni ton, krótki
+        PlayTone(400f, 0.1f, 0.3f);
     }
 
     public void PlayBallHitWall()
     {
-        PlaySFX(ballHitWallSound);
+        if (!enableAudio || audioSource == null) return;
+        // Niski ton, bardzo krótki
+        PlayTone(300f, 0.05f, 0.25f);
     }
 
     public void PlayBrickDestroy()
     {
-        PlaySFX(brickDestroySound, 0.8f);
+        if (!enableAudio || audioSource == null) return;
+        // Wyższy dźwięk niszczenia
+        PlayTone(800f, 0.15f, 0.35f);
     }
 
     public void PlayLoseLife()
     {
-        PlaySFX(loseLifeSound);
+        if (!enableAudio || audioSource == null) return;
+        // Spadający ton (przykro brzmiący)
+        StartCoroutine(PlaySweepDown(500f, 150f, 0.4f, 0.5f));
     }
 
     public void PlayGameOver()
     {
-        PlaySFX(gameOverSound);
+        if (!enableAudio || audioSource == null) return;
+        // Głęboki, smutny dźwięk
+        StartCoroutine(PlaySweepDown(300f, 100f, 0.8f, 0.6f));
     }
 
     public void PlayVictory()
     {
-        PlaySFX(victorySound);
+        if (!enableAudio || audioSource == null) return;
+        // Wznoszący się radosny dźwięk
+        StartCoroutine(PlaySweepUp(400f, 800f, 0.6f, 0.7f));
     }
 
     public void PlayButtonClick()
     {
-        PlaySFX(buttonClickSound);
+        if (!enableAudio || audioSource == null) return;
+        PlayTone(500f, 0.05f, 0.2f);
     }
 
-    private void PlaySFX(AudioClip clip, float volumeMultiplier = 1f)
+    // Generator prostego tonu
+    private void PlayTone(float frequency, float duration, float volume)
     {
-        if (clip != null && sfxSource != null)
+        int sampleRate = 44100;
+        int samples = Mathf.CeilToInt(sampleRate * duration);
+        float[] data = new float[samples];
+        
+        for (int i = 0; i < samples; i++)
         {
-            sfxSource.PlayOneShot(clip, volumeMultiplier * sfxVolume * masterVolume);
+            float t = i / (float)sampleRate;
+            float envelope = 1f - (t / duration); // Zanikanie
+            data[i] = Mathf.Sin(2 * Mathf.PI * frequency * t) * volume * envelope;
         }
+        
+        AudioClip clip = AudioClip.Create("Tone", samples, 1, sampleRate, false);
+        clip.SetData(data, 0);
+        audioSource.PlayOneShot(clip);
     }
 
-    public void PlayMusic(AudioClip music)
+    // Sweep w dół (smutny dźwięk)
+    private System.Collections.IEnumerator PlaySweepDown(float startFreq, float endFreq, float duration, float volume)
     {
-        if (musicSource != null && music != null)
+        int sampleRate = 44100;
+        int samples = Mathf.CeilToInt(sampleRate * duration);
+        float[] data = new float[samples];
+        
+        for (int i = 0; i < samples; i++)
         {
-            if (musicSource.clip != music)
-            {
-                musicSource.clip = music;
-                musicSource.Play();
-            }
+            float t = i / (float)sampleRate;
+            float progress = t / duration;
+            float freq = Mathf.Lerp(startFreq, endFreq, progress);
+            float envelope = 1f - progress;
+            data[i] = Mathf.Sin(2 * Mathf.PI * freq * t) * volume * envelope;
         }
+        
+        AudioClip clip = AudioClip.Create("SweepDown", samples, 1, sampleRate, false);
+        clip.SetData(data, 0);
+        audioSource.PlayOneShot(clip);
+        yield return null;
     }
 
-    public void PlayGameplayMusic()
+    // Sweep w górę (radosny dźwięk)
+    private System.Collections.IEnumerator PlaySweepUp(float startFreq, float endFreq, float duration, float volume)
     {
-        PlayMusic(gameplayMusic);
-    }
-
-    public void PlayMenuMusic()
-    {
-        PlayMusic(menuMusic);
-    }
-
-    public void StopMusic()
-    {
-        if (musicSource != null)
+        int sampleRate = 44100;
+        int samples = Mathf.CeilToInt(sampleRate * duration);
+        float[] data = new float[samples];
+        
+        for (int i = 0; i < samples; i++)
         {
-            musicSource.Stop();
+            float t = i / (float)sampleRate;
+            float progress = t / duration;
+            float freq = Mathf.Lerp(startFreq, endFreq, progress);
+            float envelope = 1f - (progress * 0.5f); // Powolniejsze zanikanie
+            data[i] = Mathf.Sin(2 * Mathf.PI * freq * t) * volume * envelope;
         }
+        
+        AudioClip clip = AudioClip.Create("SweepUp", samples, 1, sampleRate, false);
+        clip.SetData(data, 0);
+        audioSource.PlayOneShot(clip);
+        yield return null;
     }
 
-    // Settery dla ustawień audio
+    // Metody do zmiany głośności
     public void SetMasterVolume(float volume)
     {
         masterVolume = Mathf.Clamp01(volume);
-        UpdateVolumes();
-    }
-
-    public void SetSFXVolume(float volume)
-    {
-        sfxVolume = Mathf.Clamp01(volume);
-        UpdateVolumes();
-    }
-
-    public void SetMusicVolume(float volume)
-    {
-        musicVolume = Mathf.Clamp01(volume);
-        UpdateVolumes();
-    }
-
-    private void UpdateVolumes()
-    {
-        if (musicSource != null)
+        if (audioSource != null)
         {
-            musicSource.volume = musicVolume * masterVolume;
+            audioSource.volume = masterVolume;
         }
-        if (sfxSource != null)
-        {
-            sfxSource.volume = sfxVolume * masterVolume;
-        }
+    }
+
+    public void ToggleAudio()
+    {
+        enableAudio = !enableAudio;
     }
 }

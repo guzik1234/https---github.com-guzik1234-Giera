@@ -10,8 +10,10 @@ public class AutoSceneSetup : MonoBehaviour
     [SerializeField] private bool autoSetup = true;
     [SerializeField] private bool setupCompleted = false;
 
-    void Start()
+    void Awake()
     {
+        Debug.Log($"=== AutoSceneSetup.Awake() - autoSetup={autoSetup}, setupCompleted={setupCompleted} ===");
+        
         if (autoSetup && !setupCompleted)
         {
             Debug.Log("=== AUTO SCENE SETUP - START ===");
@@ -21,6 +23,10 @@ public class AutoSceneSetup : MonoBehaviour
             
             // Auto-start ball after 2 seconds
             Invoke(nameof(StartGame), 2f);
+        }
+        else
+        {
+            Debug.LogWarning($"AutoSceneSetup skipped: autoSetup={autoSetup}, setupCompleted={setupCompleted}");
         }
     }
 
@@ -74,8 +80,9 @@ public class AutoSceneSetup : MonoBehaviour
             camObj.tag = "MainCamera";
         }
 
+        // ZAWSZE ustaw parametry kamery (nawet jeśli już istnieje)
         mainCamera.transform.position = new Vector3(0, -3f, -10); // Jeszcze niżej - skupienie na grze
-        mainCamera.orthographic = true;
+        mainCamera.orthographic = true; // MUSI być orthographic dla 2D!
         mainCamera.orthographicSize = 5f; // Balans między przybliżeniem a widokiem całej planszy
         
         if (mainCamera.GetComponent<CameraController>() == null)
@@ -83,7 +90,7 @@ public class AutoSceneSetup : MonoBehaviour
             mainCamera.gameObject.AddComponent<CameraController>();
         }
         
-        Debug.Log("✓ Camera setup complete");
+        Debug.Log($"✓ Camera setup complete (orthographic={mainCamera.orthographic}, size={mainCamera.orthographicSize})");
     }
 
     private void SetupLighting()
@@ -138,11 +145,15 @@ public class AutoSceneSetup : MonoBehaviour
         paddle.AddComponent<SimplePaddleController>();
         paddle.AddComponent<ProceduralPaddle>();
 
-        // Material
+        // Material - użyj shadera który zawsze działa w buildzie
         Renderer renderer = paddle.GetComponent<Renderer>();
-        Material mat = new Material(Shader.Find("Standard"));
-        mat.color = Color.cyan;
-        renderer.material = mat;
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse");
+        if (shader != null)
+        {
+            Material mat = new Material(shader);
+            mat.color = Color.cyan;
+            renderer.material = mat;
+        }
 
         Debug.Log("✓ Paddle created with SimplePaddleController");
     }
@@ -186,11 +197,15 @@ public class AutoSceneSetup : MonoBehaviour
         trail.startColor = Color.yellow;
         trail.endColor = new Color(1, 1, 0, 0);
 
-        // Material
-        Renderer renderer = ball.GetComponent<Renderer>();
-        Material mat = new Material(Shader.Find("Standard"));
-        mat.color = Color.yellow;
-        renderer.material = mat;
+        // Material - użyj shadera który zawsze działa w buildzie
+        Renderer ballRenderer = ball.GetComponent<Renderer>();
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse");
+        if (shader != null)
+        {
+            Material ballMat = new Material(shader);
+            ballMat.color = Color.yellow;
+            ballRenderer.material = ballMat;
+        }
 
         Debug.Log("✓ Ball created");
     }
@@ -230,9 +245,13 @@ public class AutoSceneSetup : MonoBehaviour
     private void SetWallMaterial(GameObject wall)
     {
         Renderer renderer = wall.GetComponent<Renderer>();
-        Material mat = new Material(Shader.Find("Standard"));
-        mat.color = new Color(0.3f, 0.3f, 0.3f);
-        renderer.material = mat;
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse");
+        if (shader != null)
+        {
+            Material mat = new Material(shader);
+            mat.color = new Color(0.3f, 0.3f, 0.3f); // Dark gray
+            renderer.material = mat;
+        }
     }
 
     private void CreateDeadZone()
@@ -335,13 +354,17 @@ public class AutoSceneSetup : MonoBehaviour
                 brick.AddComponent<BrickController>();
                 brick.AddComponent<ProceduralBrick>();
 
-                // Material with color
+                // Material with color - użyj shadera który zawsze działa w buildzie
                 Renderer renderer = brick.GetComponent<Renderer>();
-                Material mat = new Material(Shader.Find("Standard"));
-                mat.color = colors[row % colors.Length];
-                mat.SetFloat("_Metallic", 0.3f);
-                mat.SetFloat("_Glossiness", 0.6f);
-                renderer.material = mat;
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse");
+                if (shader != null)
+                {
+                    Material mat = new Material(shader);
+                    mat.color = colors[row % colors.Length];
+                    if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0.3f);
+                    if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0.6f);
+                    renderer.material = mat;
+                }
             }
         }
 
@@ -350,9 +373,20 @@ public class AutoSceneSetup : MonoBehaviour
 
     private void CreateGameManager(UIManager uiManager)
     {
+        // Create AudioManager FIRST (before GameManager) to ensure it's ready
+        if (AudioManager.Instance == null)
+        {
+            GameObject audioObj = new GameObject("AudioManager");
+            audioObj.AddComponent<AudioManager>();
+            Debug.Log("✓ AudioManager created (will persist between scenes)");
+        }
+        else
+        {
+            Debug.Log("✓ AudioManager already exists, reusing");
+        }
+        
         GameObject managerObj = new GameObject("GameManager");
         GameManager gm = managerObj.AddComponent<GameManager>();
-        managerObj.AddComponent<AudioManager>();
         managerObj.AddComponent<ParticleController>();
         
         // Przypisz UIManager przez pole publiczne

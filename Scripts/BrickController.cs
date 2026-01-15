@@ -84,7 +84,10 @@ public class BrickController : MonoBehaviour
         CreateDestroyEffect();
         
         // Usunięcie bloku z managera
-        GameManager.Instance.OnBrickDestroyed(this);
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnBrickDestroyed(this);
+        }
         
         Destroy(gameObject);
     }
