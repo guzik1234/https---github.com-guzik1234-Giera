@@ -122,6 +122,12 @@ public class BallController : MonoBehaviour
                 AudioManager.Instance.PlayBallHitPaddle();
             }
             
+            // Iskierki przy trafieniu
+            if (ParticleController.Instance != null && collision.contacts.Length > 0)
+            {
+                ParticleController.Instance.PlayHitSparks(collision.contacts[0].point, collision.contacts[0].normal);
+            }
+            
             // Try both controllers
             PaddleController paddle = collision.gameObject.GetComponent<PaddleController>();
             SimplePaddleController simplePaddle = collision.gameObject.GetComponent<SimplePaddleController>();

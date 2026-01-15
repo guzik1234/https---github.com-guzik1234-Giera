@@ -11,7 +11,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Game Settings")]
     [SerializeField] private int startingLives = 3;
-    [SerializeField] private int currentLevel = 1;
     
     [Header("References")]
     [SerializeField] private BallController ballPrefab;

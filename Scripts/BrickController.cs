@@ -33,8 +33,39 @@ public class BrickController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Ball"))
         {
+            // Animacja pulse przy trafieniu
+            StartCoroutine(PulseAnimation());
             TakeDamage();
         }
+    }
+
+    private System.Collections.IEnumerator PulseAnimation()
+    {
+        // Szybkie powiększenie i zmniejszenie
+        Vector3 originalScale = transform.localScale;
+        Vector3 targetScale = originalScale * 1.15f;
+        
+        float duration = 0.1f;
+        float elapsed = 0f;
+        
+        // Scale up
+        while (elapsed < duration)
+        {
+            transform.localScale = Vector3.Lerp(originalScale, targetScale, elapsed / duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        elapsed = 0f;
+        // Scale down
+        while (elapsed < duration)
+        {
+            transform.localScale = Vector3.Lerp(targetScale, originalScale, elapsed / duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        transform.localScale = originalScale;
     }
 
     private void TakeDamage()
@@ -80,8 +111,41 @@ public class BrickController : MonoBehaviour
             GameManager.Instance.AddScore(scoreValue);
         }
         
-        // Animacja zniszczenia - eksplozja fragmentów
-        CreateDestroyEffect();
+        // ParticleSystem - kolorowa eksplozja
+        if (ParticleController.Instance != null)
+        {
+            ParticleController.Instance.PlayBrickExplosion(transform.position, originalColor);
+        }
+        
+        // Camera shake
+        Camera.main?.GetComponent<CameraController>()?.Shake(0.15f, 0.1f);
+        
+        // Animacja fade-out przed zniszczeniem
+        StartCoroutine(FadeOutAndDestroy());
+    }
+    
+    private System.Collections.IEnumerator FadeOutAndDestroy()
+    {
+        // Fade-out alpha
+        float duration = 0.25f;
+        float elapsed = 0f;
+        Color startColor = originalColor;
+        
+        while (elapsed < duration)
+        {
+            float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+            Color newColor = new Color(startColor.r, startColor.g, startColor.b, alpha);
+            
+            meshRenderer.GetPropertyBlock(propBlock);
+            propBlock.SetColor("_Color", newColor);
+            meshRenderer.SetPropertyBlock(propBlock);
+            
+            // Także scale down
+            transform.localScale = Vector3.Lerp(Vector3.one, Vector3.zero, elapsed / duration);
+            
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
         
         // Usunięcie bloku z managera
         if (GameManager.Instance != null)

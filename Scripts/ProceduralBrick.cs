@@ -13,9 +13,7 @@ public class ProceduralBrick : MonoBehaviour
     
     [Header("Detail")]
     [SerializeField] private bool addBevel = true;
-    [SerializeField] private float bevelSize = 0.05f;
     [SerializeField] private bool addIndent = true;
-    [SerializeField] private float indentDepth = 0.05f;
 
     void Start()
     {

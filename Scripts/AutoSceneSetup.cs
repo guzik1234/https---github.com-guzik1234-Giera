@@ -194,8 +194,8 @@ public class AutoSceneSetup : MonoBehaviour
         trail.startWidth = 0.2f;
         trail.endWidth = 0.05f;
         trail.material = new Material(Shader.Find("Sprites/Default"));
-        trail.startColor = Color.yellow;
-        trail.endColor = new Color(1, 1, 0, 0);
+        trail.startColor = new Color(1f, 0.5f, 0f); // Pomarańczowy zamiast żółtego
+        trail.endColor = new Color(1f, 0.5f, 0f, 0f); // Pomarańczowy zanikający
 
         // Material - użyj shadera który zawsze działa w buildzie
         Renderer ballRenderer = ball.GetComponent<Renderer>();
@@ -203,7 +203,7 @@ public class AutoSceneSetup : MonoBehaviour
         if (shader != null)
         {
             Material ballMat = new Material(shader);
-            ballMat.color = Color.yellow;
+            ballMat.color = new Color(1f, 0.5f, 0f); // Pomarańczowy zamiast żółtego
             ballRenderer.material = ballMat;
         }
 
@@ -250,6 +250,14 @@ public class AutoSceneSetup : MonoBehaviour
         {
             Material mat = new Material(shader);
             mat.color = new Color(0.3f, 0.3f, 0.3f); // Dark gray
+            
+            // WYŁĄCZ emission dla ściany!
+            if (mat.HasProperty("_EmissionColor"))
+            {
+                mat.DisableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", Color.black);
+            }
+            
             renderer.material = mat;
         }
     }
@@ -332,11 +340,11 @@ public class AutoSceneSetup : MonoBehaviour
         float spacing = 1.1f;
 
         Color[] colors = {
-            Color.red,
-            new Color(1f, 0.5f, 0f), // Orange
-            Color.yellow,
-            Color.green,
-            Color.blue
+            Color.red,                      // Czerwony jasny
+            new Color(1f, 0f, 0.5f),       // RÓŻOWY/magenta - NIE ŻÓŁTY!
+            new Color(0.6f, 0f, 0.8f),     // FIOLETOWY (ciemny!)
+            Color.green,                    // Zielony - przywrócony!
+            Color.blue                      // Niebieski
         };
 
         for (int row = 0; row < rows; row++)
@@ -365,6 +373,12 @@ public class AutoSceneSetup : MonoBehaviour
                     if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0.6f);
                     renderer.material = mat;
                 }
+                
+                // Dodaj efekt glow do cegieł
+                GlowEffect glow = brick.AddComponent<GlowEffect>();
+                // Ustaw kolor emission odpowiadający kolorowi cegły
+                Color glowColor = colors[row % colors.Length];
+                glow.SetGlowColor(glowColor * 3f); // 3x jaśniejszy dla MOCNEGO efektu!
             }
         }
 

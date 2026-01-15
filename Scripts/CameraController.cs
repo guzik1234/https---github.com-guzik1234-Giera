@@ -56,26 +56,40 @@ public class CameraController : MonoBehaviour
             originalPosition = smoothedPosition;
         }
         
-        // Screen shake effect - DISABLED
-        // Można włączyć zmieniając false na true
-        if (false && shakeIntensity > 0)
+        // Screen shake effect - ENABLED
+        if (shakeIntensity > 0)
         {
             transform.position = originalPosition + Random.insideUnitSphere * shakeIntensity;
             shakeIntensity -= shakeDecay * Time.deltaTime;
             shakeIntensity = Mathf.Max(0f, shakeIntensity);
         }
-        else
+        else if (shakeIntensity <= 0)
         {
             transform.position = originalPosition;
         }
     }
 
     /// <summary>
-    /// Wywołuje efekt wstrząsu kamery
+    /// Wywołuje efekt wstrząsu kamery z czasem trwania
     /// </summary>
-    public void Shake(float intensity)
+    public void Shake(float intensity, float duration)
+    {
+        StartCoroutine(ShakeCoroutine(intensity, duration));
+    }
+    
+    private System.Collections.IEnumerator ShakeCoroutine(float intensity, float duration)
     {
         shakeIntensity = intensity;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        shakeIntensity = 0f;
+        transform.position = originalPosition;
     }
 
     /// <summary>

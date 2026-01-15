@@ -9,14 +9,8 @@ public class WallController : MonoBehaviour
     [SerializeField] private ParticleSystem hitParticles;
     [SerializeField] private float particleLifetime = 0.5f;
     
-    [Header("Visual Feedback")]
-    [SerializeField] private bool flashOnHit = true;
-    [SerializeField] private Color flashColor = Color.white;
-    [SerializeField] private float flashDuration = 0.1f;
-    
     private Renderer meshRenderer;
     private Color originalColor;
-    private MaterialPropertyBlock propBlock;
 
     void Awake()
     {
@@ -24,7 +18,6 @@ public class WallController : MonoBehaviour
         if (meshRenderer != null)
         {
             originalColor = meshRenderer.material.color;
-            propBlock = new MaterialPropertyBlock();
         }
     }
 
@@ -32,12 +25,6 @@ public class WallController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Ball"))
         {
-            // Efekty wizualne
-            if (flashOnHit && meshRenderer != null)
-            {
-                StartCoroutine(FlashEffect());
-            }
-            
             // Particles w miejscu kontaktu
             if (hitParticles != null && collision.contacts.Length > 0)
             {
@@ -56,20 +43,8 @@ public class WallController : MonoBehaviour
             CameraController camera = FindFirstObjectByType<CameraController>();
             if (camera != null)
             {
-                camera.Shake(0.05f);
+                camera.Shake(0.05f, 0.08f);
             }
         }
-    }
-
-    private System.Collections.IEnumerator FlashEffect()
-    {
-        meshRenderer.GetPropertyBlock(propBlock);
-        propBlock.SetColor("_EmissionColor", flashColor);
-        meshRenderer.SetPropertyBlock(propBlock);
-        
-        yield return new WaitForSeconds(flashDuration);
-        
-        propBlock.SetColor("_EmissionColor", Color.black);
-        meshRenderer.SetPropertyBlock(propBlock);
     }
 }

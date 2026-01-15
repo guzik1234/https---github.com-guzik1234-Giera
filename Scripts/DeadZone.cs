@@ -21,7 +21,7 @@ public class DeadZone : MonoBehaviour
             CameraController camera = FindFirstObjectByType<CameraController>();
             if (camera != null)
             {
-                camera.Shake(0.2f);
+                camera.Shake(0.2f, 0.15f);
             }
         }
     }
