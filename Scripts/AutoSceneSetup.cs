@@ -265,11 +265,31 @@ public class AutoSceneSetup : MonoBehaviour
             Debug.Log($"Removed Light from {wall.name}");
         }
         
+        // Załaduj teksturę cegły z folderu Textures
+        Texture2D brickTexture = null;
+        #if UNITY_EDITOR
+        brickTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Textures/cegla.jpg");
+        #else
+        brickTexture = Resources.Load<Texture2D>("Textures/cegla");
+        #endif
+        
         Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse");
         if (shader != null)
         {
             Material mat = new Material(shader);
-            mat.color = new Color(0.3f, 0.3f, 0.3f); // Dark gray - TAKI SAM DLA WSZYSTKICH!
+            
+            // Jeśli tekstura została załadowana, użyj jej
+            if (brickTexture != null)
+            {
+                mat.mainTexture = brickTexture;
+                mat.color = Color.white; // Biały kolor aby tekstura była widoczna
+                Debug.Log($"✓ Brick texture loaded and applied to {wall.name}");
+            }
+            else
+            {
+                mat.color = new Color(0.3f, 0.3f, 0.3f); // Dark gray fallback
+                Debug.LogWarning($"Brick texture not found, using gray color for {wall.name}");
+            }
             
             // KOMPLETNIE WYŁĄCZ emission!
             mat.DisableKeyword("_EMISSION");
@@ -284,7 +304,7 @@ public class AutoSceneSetup : MonoBehaviour
             }
             
             renderer.material = mat;
-            Debug.Log($"✓ Wall material set for {wall.name}: color={mat.color}, emission=OFF");
+            Debug.Log($"✓ Wall material set for {wall.name}");
         }
     }
 
