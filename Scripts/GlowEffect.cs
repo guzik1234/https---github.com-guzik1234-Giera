@@ -31,11 +31,19 @@ public class GlowEffect : MonoBehaviour
     {
         Debug.Log($"🔵 GlowEffect.Start() - Initializing on {gameObject.name}...");
         
-        // NIE dodawaj GlowEffect do ścian!
-        if (gameObject.CompareTag("Wall"))
+        // NIE dodawaj GlowEffect do ścian - sprawdzenie tag I nazwy!
+        if (gameObject.CompareTag("Wall") || gameObject.name.Contains("Wall"))
         {
             Debug.Log("⚠️ Skipping GlowEffect for Wall object!");
             useGlow = false;
+            
+            // Wyłącz Light jeśli istnieje
+            Light existingLight = GetComponent<Light>();
+            if (existingLight != null)
+            {
+                Destroy(existingLight);
+            }
+            
             return;
         }
         
@@ -72,13 +80,17 @@ public class GlowEffect : MonoBehaviour
         glowLight.intensity = 4f; // MAKSYMALNA jasność!
         glowLight.shadows = LightShadows.None; // Bez cieni dla performance
         
-        Debug.Log($"💡 Point Light added: color={emissionColor}, range={glowLight.range}, intensity={glowLight.intensity}");
+        // WYŁĄCZ oświetlanie ścian (Layer "Ignore Raycast" = bit 2)
+        // Default mask to -1 (wszystkie), musimy usunąć bit dla ścian
+        glowLight.cullingMask = ~(1 << LayerMask.NameToLayer("Ignore Raycast"));
+        
+        Debug.Log($"💡 Point Light added: color={emissionColor}, range={glowLight.range}, intensity={glowLight.intensity}, cullingMask={glowLight.cullingMask}");
     }
     
     void Update()
     {
-        // NIE pulsuj ścian!
-        if (gameObject.CompareTag("Wall"))
+        // NIE pulsuj ścian - sprawdzenie tag I nazwy!
+        if (gameObject.CompareTag("Wall") || gameObject.name.Contains("Wall"))
         {
             return;
         }

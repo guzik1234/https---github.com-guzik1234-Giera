@@ -66,7 +66,7 @@ public class AutoSceneSetup : MonoBehaviour
         // 8. Create UI FIRST (before GameManager)
         UIManager createdUIManager = CreateUI();
         
-        // 9. Create GameManager and assign UI
+        // 10. Create GameManager and assign UI
         CreateGameManager(createdUIManager);
     }
 
@@ -216,6 +216,7 @@ public class AutoSceneSetup : MonoBehaviour
         GameObject leftWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         leftWall.name = "LeftWall";
         leftWall.tag = "Wall";
+        leftWall.layer = LayerMask.NameToLayer("Ignore Raycast"); // WYŁĄCZ oświetlanie przez Point Lights!
         leftWall.transform.position = new Vector3(-9.5f, 0, 0); // Dalej od gry
         leftWall.transform.localScale = new Vector3(1f, 30, 3); // Wysokość 30, grubość 3
         leftWall.AddComponent<WallController>();
@@ -225,6 +226,7 @@ public class AutoSceneSetup : MonoBehaviour
         GameObject rightWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         rightWall.name = "RightWall";
         rightWall.tag = "Wall";
+        rightWall.layer = LayerMask.NameToLayer("Ignore Raycast"); // WYŁĄCZ oświetlanie przez Point Lights!
         rightWall.transform.position = new Vector3(9.5f, 0, 0); // Dalej od gry
         rightWall.transform.localScale = new Vector3(1f, 30, 3); // Wysokość 30, grubość 3
         rightWall.AddComponent<WallController>();
@@ -234,6 +236,7 @@ public class AutoSceneSetup : MonoBehaviour
         GameObject topWall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         topWall.name = "TopWall";
         topWall.tag = "Wall";
+        topWall.layer = LayerMask.NameToLayer("Ignore Raycast"); // WYŁĄCZ oświetlanie przez Point Lights!
         topWall.transform.position = new Vector3(0, 7.2f, 0); // Wyżej żeby nie było pustej przestrzeni
         topWall.transform.localScale = new Vector3(22, 1f, 3); // Szersza i grubsza
         topWall.AddComponent<WallController>();
@@ -245,20 +248,43 @@ public class AutoSceneSetup : MonoBehaviour
     private void SetWallMaterial(GameObject wall)
     {
         Renderer renderer = wall.GetComponent<Renderer>();
+        
+        // Usuń GlowEffect jeśli przypadkiem został dodany
+        GlowEffect glowEffect = wall.GetComponent<GlowEffect>();
+        if (glowEffect != null)
+        {
+            Destroy(glowEffect);
+            Debug.Log($"Removed GlowEffect from {wall.name}");
+        }
+        
+        // Usuń Light jeśli istnieje
+        Light light = wall.GetComponent<Light>();
+        if (light != null)
+        {
+            Destroy(light);
+            Debug.Log($"Removed Light from {wall.name}");
+        }
+        
         Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard") ?? Shader.Find("Diffuse");
         if (shader != null)
         {
             Material mat = new Material(shader);
-            mat.color = new Color(0.3f, 0.3f, 0.3f); // Dark gray
+            mat.color = new Color(0.3f, 0.3f, 0.3f); // Dark gray - TAKI SAM DLA WSZYSTKICH!
             
-            // WYŁĄCZ emission dla ściany!
+            // KOMPLETNIE WYŁĄCZ emission!
+            mat.DisableKeyword("_EMISSION");
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
             if (mat.HasProperty("_EmissionColor"))
             {
-                mat.DisableKeyword("_EMISSION");
                 mat.SetColor("_EmissionColor", Color.black);
+            }
+            if (mat.HasProperty("_EmissionEnabled"))
+            {
+                mat.SetFloat("_EmissionEnabled", 0f);
             }
             
             renderer.material = mat;
+            Debug.Log($"✓ Wall material set for {wall.name}: color={mat.color}, emission=OFF");
         }
     }
 
