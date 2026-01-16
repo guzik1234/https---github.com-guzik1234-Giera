@@ -66,17 +66,17 @@ public class AudioManager : MonoBehaviour
         #else
         // W buildzie - próbuj załadować z Resources
         if (paddleHitSound == null)
-            paddleHitSound = Resources.Load<AudioClip>("Audio/paddle_hit");
+            paddleHitSound = Resources.Load<AudioClip>("Audio/paddle_hit.wav");
         if (brickBreakSound == null)
-            brickBreakSound = Resources.Load<AudioClip>("Audio/brick_break");
+            brickBreakSound = Resources.Load<AudioClip>("Audio/brick_break.wav");
         if (wallBounceSound == null)
             wallBounceSound = Resources.Load<AudioClip>("Audio/wall_bounce");
         if (lifeLostSound == null)
-            lifeLostSound = Resources.Load<AudioClip>("Audio/life_lost");
+            lifeLostSound = Resources.Load<AudioClip>("Audio/life_lost.wav");
         if (gameOverSound == null)
             gameOverSound = Resources.Load<AudioClip>("Audio/game_over");
         if (victorySound == null)
-            victorySound = Resources.Load<AudioClip>("Audio/victory");
+            victorySound = Resources.Load<AudioClip>("Audio/victory.wav");
         #endif
             
         Debug.Log($"AudioManager: Loaded sounds - Paddle:{paddleHitSound!=null}, Brick:{brickBreakSound!=null}, Wall:{wallBounceSound!=null}, Life:{lifeLostSound!=null}, GameOver:{gameOverSound!=null}, Victory:{victorySound!=null}");

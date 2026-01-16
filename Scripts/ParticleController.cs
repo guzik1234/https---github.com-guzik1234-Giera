@@ -58,10 +58,16 @@ public class ParticleController : MonoBehaviour
         sizeOverLifetime.enabled = true;
         sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, 1, 1, 0));
         
-        // Renderer settings - użyj Particles/Standard Unlit
+        // Renderer settings - użyj prosty Unlit shader (działa w EXE)
         var renderer = ps.GetComponent<ParticleSystemRenderer>();
-        Material particleMat = new Material(Shader.Find("Particles/Standard Unlit") ?? Shader.Find("Sprites/Default"));
+        Shader particleShader = Shader.Find("Universal Render Pipeline/Unlit") ?? 
+                               Shader.Find("Unlit/Color") ?? 
+                               Shader.Find("Sprites/Default") ?? 
+                               Shader.Find("Diffuse");
+        Material particleMat = new Material(particleShader);
         particleMat.color = color;
+        if (particleMat.HasProperty("_BaseColor"))
+            particleMat.SetColor("_BaseColor", color);
         renderer.material = particleMat;
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
         
@@ -96,15 +102,21 @@ public class ParticleController : MonoBehaviour
         shape.angle = 30f;
         shape.radius = 0.1f;
         
-        // Renderer - użyj Particle/Standard Unlit zamiast Sprites/Default
+        // Renderer - użyj prosty shader (działa w EXE)
         var renderer = ps.GetComponent<ParticleSystemRenderer>();
-        Material sparkMat = new Material(Shader.Find("Particles/Standard Unlit") ?? Shader.Find("Sprites/Default"));
+        Shader sparkShader = Shader.Find("Universal Render Pipeline/Unlit") ?? 
+                            Shader.Find("Unlit/Color") ?? 
+                            Shader.Find("Sprites/Default") ?? 
+                            Shader.Find("Diffuse");
+        Material sparkMat = new Material(sparkShader);
         sparkMat.color = new Color(1f, 0.5f, 0f); // Pomarańczowy zamiast żółtego
         if (sparkMat.HasProperty("_EmissionColor"))
         {
             sparkMat.EnableKeyword("_EMISSION");
             sparkMat.SetColor("_EmissionColor", new Color(1f, 0.5f, 0f)); // Pomarańczowy
         }
+        if (sparkMat.HasProperty("_BaseColor"))
+            sparkMat.SetColor("_BaseColor", new Color(1f, 0.5f, 0f));
         renderer.material = sparkMat;
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
         

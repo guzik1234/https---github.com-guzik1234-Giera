@@ -196,6 +196,14 @@ public class BallController : MonoBehaviour
             {
                 AudioManager.Instance.PlayBallHitBrick();
             }
+            
+            // Animacja cegły i zniszczenie
+            BrickController brick = collision.gameObject.GetComponent<BrickController>();
+            if (brick != null)
+            {
+                brick.OnBallHit();
+                brick.OnTakeDamage(); // Wywołanie zniszczenia z zewnątrz (jak paletka)
+            }
         }
         
         // Zwiększenie prędkości przy każdym uderzeniu

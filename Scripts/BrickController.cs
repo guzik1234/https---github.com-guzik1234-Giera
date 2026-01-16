@@ -33,10 +33,21 @@ public class BrickController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Ball"))
         {
-            // Animacja pulse przy trafieniu
-            StartCoroutine(PulseAnimation());
-            TakeDamage();
+            // Animacja i damage są teraz wywoływane z BallController
+            // Nic tutaj nie robimy - logika przeniesiona do BallController
         }
+    }
+    
+    // Publiczna metoda wywoływana przez BallController (jak w SimplePaddleController)
+    public void OnBallHit()
+    {
+        StartCoroutine(PulseAnimation());
+    }
+    
+    // Publiczna metoda wywoływana przez BallController po uderzeniu
+    public void OnTakeDamage()
+    {
+        TakeDamage();
     }
 
     private System.Collections.IEnumerator PulseAnimation()
@@ -116,10 +127,13 @@ public class BrickController : MonoBehaviour
         {
             ParticleController.Instance.PlayBrickExplosion(transform.position, originalColor);
         }
-        
+
+        // Rozbryzg fragmentów
+        CreateDestroyEffect();
+
         // Camera shake
         Camera.main?.GetComponent<CameraController>()?.Shake(0.15f, 0.1f);
-        
+
         // Animacja fade-out przed zniszczeniem
         StartCoroutine(FadeOutAndDestroy());
     }
