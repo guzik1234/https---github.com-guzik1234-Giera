@@ -3,7 +3,6 @@ using System.Collections;
 
 /// <summary>
 /// Manager audio - zarządza dźwiękami i muzyką
-/// UWAGA: Używa ZAAWANSOWANYCH proceduralnych dźwięków (symulacja rzeczywistych)
 /// </summary>
 public class AudioManager : MonoBehaviour
 {
@@ -12,6 +11,14 @@ public class AudioManager : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float masterVolume = 0.3f;
     [SerializeField] private bool enableAudio = true;
+    
+    [Header("Sound Clips")]
+    [SerializeField] private AudioClip paddleHitSound;
+    [SerializeField] private AudioClip brickBreakSound;
+    [SerializeField] private AudioClip wallBounceSound;
+    [SerializeField] private AudioClip lifeLostSound;
+    [SerializeField] private AudioClip gameOverSound;
+    [SerializeField] private AudioClip victorySound;
     
     private AudioSource audioSource;
 
@@ -35,233 +42,167 @@ public class AudioManager : MonoBehaviour
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
         audioSource.volume = masterVolume;
+        
+        // Automatyczne ładowanie dźwięków z folderu Audio
+        LoadAudioClips();
     }
+
+    private void LoadAudioClips()
+    {
+        #if UNITY_EDITOR
+        // W edytorze - ładuj z Assets/Audio
+        if (paddleHitSound == null)
+            paddleHitSound = LoadAudioFromPath("Assets/Audio/paddle_hit");
+        if (brickBreakSound == null)
+            brickBreakSound = LoadAudioFromPath("Assets/Audio/brick_break");
+        if (wallBounceSound == null)
+            wallBounceSound = LoadAudioFromPath("Assets/Audio/wall_bounce");
+        if (lifeLostSound == null)
+            lifeLostSound = LoadAudioFromPath("Assets/Audio/life_lost");
+        if (gameOverSound == null)
+            gameOverSound = LoadAudioFromPath("Assets/Audio/game_over");
+        if (victorySound == null)
+            victorySound = LoadAudioFromPath("Assets/Audio/victory");
+        #else
+        // W buildzie - próbuj załadować z Resources
+        if (paddleHitSound == null)
+            paddleHitSound = Resources.Load<AudioClip>("Audio/paddle_hit");
+        if (brickBreakSound == null)
+            brickBreakSound = Resources.Load<AudioClip>("Audio/brick_break");
+        if (wallBounceSound == null)
+            wallBounceSound = Resources.Load<AudioClip>("Audio/wall_bounce");
+        if (lifeLostSound == null)
+            lifeLostSound = Resources.Load<AudioClip>("Audio/life_lost");
+        if (gameOverSound == null)
+            gameOverSound = Resources.Load<AudioClip>("Audio/game_over");
+        if (victorySound == null)
+            victorySound = Resources.Load<AudioClip>("Audio/victory");
+        #endif
+            
+        Debug.Log($"AudioManager: Loaded sounds - Paddle:{paddleHitSound!=null}, Brick:{brickBreakSound!=null}, Wall:{wallBounceSound!=null}, Life:{lifeLostSound!=null}, GameOver:{gameOverSound!=null}, Victory:{victorySound!=null}");
+    }
+    
+    #if UNITY_EDITOR
+    private AudioClip LoadAudioFromPath(string basePath)
+    {
+        // Szukaj pliku z różnymi rozszerzeniami
+        string[] extensions = { ".wav", ".wav.wav", ".mp3", ".wav.mp3", ".ogg" };
+        
+        foreach (string ext in extensions)
+        {
+            string fullPath = basePath + ext;
+            AudioClip clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(fullPath);
+            if (clip != null)
+            {
+                Debug.Log($"Loaded audio: {fullPath}");
+                return clip;
+            }
+        }
+        
+        Debug.LogWarning($"Could not find audio file: {basePath}");
+        return null;
+    }
+    #endif
 
     // Metody publiczne do odtwarzania dźwięków
     public void PlayBallHitPaddle()
     {
         if (!enableAudio || audioSource == null) return;
-        // Ostry, krótki dźwięk z harmonicznymi - symulacja uderzenia w drewno
-        StartCoroutine(PlayComplexTone(new float[] { 800f, 1200f, 1600f }, 0.08f, 0.5f));
+        if (paddleHitSound != null)
+        {
+            audioSource.PlayOneShot(paddleHitSound, masterVolume);
+        }
+        else
+        {
+            Debug.LogWarning("Paddle hit sound not loaded!");
+        }
     }
 
     public void PlayBallHitBrick()
     {
         if (!enableAudio || audioSource == null) return;
-        // Średni ton z rezonansem - symulacja uderzenia w ceramikę
-        StartCoroutine(PlayComplexTone(new float[] { 500f, 750f, 1000f }, 0.12f, 0.4f));
+        if (brickBreakSound != null)
+        {
+            audioSource.PlayOneShot(brickBreakSound, masterVolume * 0.8f);
+        }
+        else
+        {
+            Debug.LogWarning("Brick break sound not loaded!");
+        }
     }
 
     public void PlayBallHitWall()
     {
         if (!enableAudio || audioSource == null) return;
-        // Niski, tępy dźwięk - symulacja odbicia od ściany
-        StartCoroutine(PlayComplexTone(new float[] { 300f, 450f }, 0.06f, 0.3f));
+        if (wallBounceSound != null)
+        {
+            audioSource.PlayOneShot(wallBounceSound, masterVolume * 0.6f);
+        }
+        else
+        {
+            Debug.LogWarning("Wall bounce sound not loaded!");
+        }
     }
 
     public void PlayBrickDestroy()
     {
         if (!enableAudio || audioSource == null) return;
-        // Dźwięk rozbicia z szumem białym - symulacja pęknięcia
-        StartCoroutine(PlayCrashSound(0.2f, 0.5f));
+        if (brickBreakSound != null)
+        {
+            audioSource.PlayOneShot(brickBreakSound, masterVolume);
+        }
+        else
+        {
+            Debug.LogWarning("Brick destroy sound not loaded!");
+        }
     }
 
     public void PlayLoseLife()
     {
         if (!enableAudio || audioSource == null) return;
-        // Spadający ton z vibrato - smutny efekt
-        StartCoroutine(PlaySweepDownWithVibrato(600f, 200f, 0.5f, 0.6f));
+        if (lifeLostSound != null)
+        {
+            audioSource.PlayOneShot(lifeLostSound, masterVolume);
+        }
+        else
+        {
+            Debug.LogWarning("Life lost sound not loaded!");
+        }
     }
 
     public void PlayGameOver()
     {
         if (!enableAudio || audioSource == null) return;
-        // Głęboki, dramatyczny spadek z rezonansem
-        StartCoroutine(PlayDramaticGameOver(0.8f, 0.7f));
+        if (gameOverSound != null)
+        {
+            audioSource.PlayOneShot(gameOverSound, masterVolume * 4f);
+        }
+        else
+        {
+            Debug.LogWarning("Game over sound not loaded!");
+        }
     }
 
     public void PlayVictory()
     {
         if (!enableAudio || audioSource == null) return;
-        // Wznoszący się akord major - radosna melodia
-        StartCoroutine(PlayVictoryFanfare(1.0f, 0.8f));
+        if (victorySound != null)
+        {
+            audioSource.PlayOneShot(victorySound, masterVolume);
+        }
+        else
+        {
+            Debug.LogWarning("Victory sound not loaded!");
+        }
     }
 
     public void PlayButtonClick()
     {
         if (!enableAudio || audioSource == null) return;
-        // Krótki, przyjemny klik
-        PlayTone(600f, 0.04f, 0.2f);
-    }
-
-    // Generator tonu z wieloma częstotliwościami (harmoniczne)
-    private IEnumerator PlayComplexTone(float[] frequencies, float duration, float volume)
-    {
-        int sampleRate = 44100;
-        int samples = Mathf.CeilToInt(sampleRate * duration);
-        float[] data = new float[samples];
-        
-        for (int i = 0; i < samples; i++)
+        if (paddleHitSound != null)
         {
-            float t = i / (float)sampleRate;
-            float envelope = 1f - (t / duration); // Zanikanie
-            float sample = 0f;
-            
-            // Suma harmonicznych
-            for (int f = 0; f < frequencies.Length; f++)
-            {
-                float amplitude = 1f / (f + 1); // Harmoniczne są cichsze
-                sample += Mathf.Sin(2 * Mathf.PI * frequencies[f] * t) * amplitude;
-            }
-            
-            data[i] = (sample / frequencies.Length) * volume * envelope;
+            audioSource.PlayOneShot(paddleHitSound, masterVolume * 0.3f);
         }
-        
-        AudioClip clip = AudioClip.Create("ComplexTone", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        audioSource.PlayOneShot(clip);
-        yield return null;
-    }
-
-    // Dźwięk rozbicia z szumem (crash/shatter)
-    private IEnumerator PlayCrashSound(float duration, float volume)
-    {
-        int sampleRate = 44100;
-        int samples = Mathf.CeilToInt(sampleRate * duration);
-        float[] data = new float[samples];
-        
-        for (int i = 0; i < samples; i++)
-        {
-            float t = i / (float)sampleRate;
-            float progress = t / duration;
-            
-            // Szum biały (random) + wysokie częstotliwości
-            float noise = Random.Range(-1f, 1f);
-            float tone = Mathf.Sin(2 * Mathf.PI * Random.Range(2000f, 4000f) * t);
-            
-            // Szybkie zanikanie
-            float envelope = Mathf.Pow(1f - progress, 2f);
-            
-            data[i] = (noise * 0.7f + tone * 0.3f) * volume * envelope;
-        }
-        
-        AudioClip clip = AudioClip.Create("CrashSound", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        audioSource.PlayOneShot(clip);
-        yield return null;
-    }
-
-    // Sweep w dół z vibrato (dramatyczny efekt)
-    private IEnumerator PlaySweepDownWithVibrato(float startFreq, float endFreq, float duration, float volume)
-    {
-        int sampleRate = 44100;
-        int samples = Mathf.CeilToInt(sampleRate * duration);
-        float[] data = new float[samples];
-        
-        for (int i = 0; i < samples; i++)
-        {
-            float t = i / (float)sampleRate;
-            float progress = t / duration;
-            
-            // Główna częstotliwość (sweep)
-            float freq = Mathf.Lerp(startFreq, endFreq, progress);
-            
-            // Vibrato (modulacja)
-            float vibrato = Mathf.Sin(2 * Mathf.PI * 6f * t) * 20f;
-            
-            float envelope = 1f - progress;
-            data[i] = Mathf.Sin(2 * Mathf.PI * (freq + vibrato) * t) * volume * envelope;
-        }
-        
-        AudioClip clip = AudioClip.Create("SweepDownVibrato", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        audioSource.PlayOneShot(clip);
-        yield return null;
-    }
-
-    // Dramatyczny Game Over (akord minor)
-    private IEnumerator PlayDramaticGameOver(float duration, float volume)
-    {
-        int sampleRate = 44100;
-        int samples = Mathf.CeilToInt(sampleRate * duration);
-        float[] data = new float[samples];
-        
-        // Akord minor (smutny): C, Eb, G
-        float[] chord = { 261.63f, 311.13f, 392.00f };
-        
-        for (int i = 0; i < samples; i++)
-        {
-            float t = i / (float)sampleRate;
-            float progress = t / duration;
-            
-            float sample = 0f;
-            foreach (float freq in chord)
-            {
-                // Każda nuta opada
-                float fallingFreq = freq * (1f - progress * 0.3f);
-                sample += Mathf.Sin(2 * Mathf.PI * fallingFreq * t);
-            }
-            
-            float envelope = 1f - (progress * 0.5f);
-            data[i] = (sample / chord.Length) * volume * envelope;
-        }
-        
-        AudioClip clip = AudioClip.Create("GameOverDramatic", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        audioSource.PlayOneShot(clip);
-        yield return null;
-    }
-
-    // Fanfara zwycięstwa (akord major + arpeggio)
-    private IEnumerator PlayVictoryFanfare(float duration, float volume)
-    {
-        int sampleRate = 44100;
-        int samples = Mathf.CeilToInt(sampleRate * duration);
-        float[] data = new float[samples];
-        
-        // Akord major (radosny): C, E, G, C
-        float[] notes = { 523.25f, 659.25f, 783.99f, 1046.50f };
-        
-        for (int i = 0; i < samples; i++)
-        {
-            float t = i / (float)sampleRate;
-            float progress = t / duration;
-            
-            // Arpeggio - nuty grają kolejno
-            int noteIndex = Mathf.FloorToInt(progress * notes.Length) % notes.Length;
-            float freq = notes[noteIndex];
-            
-            // Dodaj harmoniczne
-            float sample = Mathf.Sin(2 * Mathf.PI * freq * t);
-            sample += Mathf.Sin(2 * Mathf.PI * freq * 2f * t) * 0.5f; // Oktawa wyżej
-            
-            float envelope = Mathf.Sin(progress * Mathf.PI); // Bell curve
-            data[i] = sample * volume * envelope * 0.5f;
-        }
-        
-        AudioClip clip = AudioClip.Create("VictoryFanfare", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        audioSource.PlayOneShot(clip);
-        yield return null;
-    }
-
-    // Generator prostego tonu (helper)
-    private void PlayTone(float frequency, float duration, float volume)
-    {
-        int sampleRate = 44100;
-        int samples = Mathf.CeilToInt(sampleRate * duration);
-        float[] data = new float[samples];
-        
-        for (int i = 0; i < samples; i++)
-        {
-            float t = i / (float)sampleRate;
-            float envelope = 1f - (t / duration);
-            data[i] = Mathf.Sin(2 * Mathf.PI * frequency * t) * volume * envelope;
-        }
-        
-        AudioClip clip = AudioClip.Create("Tone", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        audioSource.PlayOneShot(clip);
     }
 
     // Metody do zmiany głośności
